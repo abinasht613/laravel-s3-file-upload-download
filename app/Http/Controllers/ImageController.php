@@ -65,9 +65,8 @@ class ImageController extends Controller
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ]
         ]);
-        #$keyname = 'uploads/' . $file->getClientOriginalName();
         $extension  = request()->file('image')->getClientOriginalExtension(); //This is to get the extension of the image file just uploaded
-        $keyname = time() . '.' . $extension;
+        $keyname = 'uploads/' .time() . '.' . $extension;
         //create bucket
         if (!$s3->doesBucketExist(env('AWS_BUCKET'))) {
             // Create bucket if it doesn't exist
@@ -89,6 +88,7 @@ class ImageController extends Controller
                 'Body'   => fopen($file, 'r'),
                 'ACL'    => 'public-read'
             ]);
+            // dd($result);
             // Print the URL to the object.
             
             Image::create([
@@ -97,9 +97,39 @@ class ImageController extends Controller
             ]);
             return response()->json([
                 'message' => 'File uploaded successfully',
-                'file link' => $result['ObjectURL']
+                'file link' => $result['ObjectURL'],
             ]);
         } catch (S3Exception $e) {
+            return response()->json([
+                'Upload Failed' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function delete(){
+        try{
+            $path="https://infotute-files.s3.ap-south-1.amazonaws.com/uploads/1733aaa045247.png";
+            $file_path = parse_url($path);
+            // dd($file_path);
+            // $s3 = new S3Client([
+            //     'version' => 'latest',
+            //     'region'  => env('AWS_DEFAULT_REGION'),
+            //     'credentials' => [
+            //         'key'    => env('AWS_ACCESS_KEY_ID'),
+            //         'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            //     ]
+            // ]);
+            // $result = $s3->deleteObject(array(
+            //     'Bucket' => env('AWS_BUCKET'),
+            //     'Key'    => "uploads/1733045033.png"
+            // ));
+            
+            
+            $result=Storage::disk('s3')->delete($file_path['path']);
+            
+            dd($result);
+        }
+        catch(Exception $e){
             return response()->json([
                 'Upload Failed' => $e->getMessage()
             ]);
